@@ -1,0 +1,39 @@
+{
+  "name": "reminote",
+  "version": "1.0.0",
+  "description": "Reminote - Remote work management app",
+  "private": true,
+  "workspaces": [
+    "api",
+    "app"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:app\"",
+    "dev:api": "cd api && npm run dev",
+    "dev:app": "cd app && npm start",
+    "build": "npm run build:api && npm run build:app",
+    "build:api": "cd api && npm run build",
+    "build:app": "cd app && npm run build",
+    "install:all": "npm install && cd api && npm install && cd ../app && npm install",
+    "clean": "rm -rf node_modules api/node_modules app/node_modules",
+    "test": "npm run test:api && npm run test:app",
+    "test:api": "cd api && npm test",
+    "test:app": "cd app && npm test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "remote-work",
+    "management",
+    "react-native",
+    "expo",
+    "nodejs"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
