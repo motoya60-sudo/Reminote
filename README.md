@@ -1,113 +1,150 @@
-# Reminote
+# Reminote（リモノート）
 
-Remote work management application built with React Native (Expo) and Node.js.
+リモートワーク管理アプリケーション（React Native + Node.js）
 
-## Project Structure
+## 📱 アプリについて
+
+Reminoteは、リモートワークを効率的に管理するためのモバイルアプリケーションです。チームでの協働作業、作業時間の追跡、リアルタイム通知などの機能を提供します。
+
+## 🏗️ プロジェクト構成
 
 ```
 Reminote/
-├── api/                 # Backend API (Node.js/Express)
-├── app/                 # Frontend App (React Native/Expo)
-├── docs/                # Documentation
-├── shared/              # Shared libraries and types
+├── api/                 # バックエンドAPI（Node.js/Express）
+├── app/                 # フロントエンドアプリ（React Native/Expo）
+├── docs/                # ドキュメント
+├── shared/              # 共通ライブラリと型定義
 ├── .gitignore
 ├── env.example
-├── package.json         # Root package management
+├── package.json         # ルートレベルの管理
 └── README.md
 ```
 
-## Getting Started
+## 🚀 セットアップ
 
-### Prerequisites
+### 必要な環境
 
-- Node.js (>=18.0.0)
-- npm (>=8.0.0)
-- Expo CLI (for mobile development)
+- Node.js（18.0.0以上）
+- npm（8.0.0以上）
+- Expo CLI（モバイル開発用）
 
-### Installation
+### インストール手順
 
-1. Clone the repository
+1. リポジトリをクローン
 ```bash
 git clone <repository-url>
 cd Reminote
 ```
 
-2. Install all dependencies
+2. 全ての依存関係をインストール
 ```bash
 npm run install:all
 ```
 
-3. Set up environment variables
+3. 環境変数を設定
 ```bash
 cp env.example .env
-# Edit .env with your configuration
+# .envファイルを編集して設定を入力
 ```
 
-### Development
+## 💻 開発
 
-Start both API and app in development mode:
+### 開発環境の起動
+
+APIとアプリを同時に起動：
 ```bash
 npm run dev
 ```
 
-Or start them separately:
+個別に起動する場合：
 ```bash
-# Start API server
+# APIサーバーのみ起動
 npm run dev:api
 
-# Start mobile app
+# モバイルアプリのみ起動
 npm run dev:app
 ```
 
-### Available Scripts
+### 利用可能なコマンド
 
-- `npm run dev` - Start both API and app
-- `npm run dev:api` - Start API server only
-- `npm run dev:app` - Start mobile app only
-- `npm run build` - Build both API and app
-- `npm run test` - Run all tests
-- `npm run install:all` - Install all dependencies
-- `npm run clean` - Clean all node_modules
+| コマンド | 説明 |
+|---------|------|
+| `npm run dev` | APIとアプリを同時起動 |
+| `npm run dev:api` | APIサーバーのみ起動 |
+| `npm run dev:app` | モバイルアプリのみ起動 |
+| `npm run build` | APIとアプリをビルド |
+| `npm run test` | 全てのテストを実行 |
+| `npm run install:all` | 全ての依存関係をインストール |
+| `npm run clean` | node_modulesをクリーンアップ |
 
-## API
+## 🔌 API
 
-The API server runs on port 3000 by default.
+APIサーバーはデフォルトでポート3000で動作します。
 
-### Endpoints
+### エンドポイント
 
-- `GET /api/health` - Health check
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| `GET` | `/api/health` | ヘルスチェック |
+| `POST` | `/api/auth/login` | ユーザーログイン |
+| `POST` | `/api/auth/register` | ユーザー登録 |
+| `GET` | `/api/users/profile` | ユーザープロフィール取得 |
+| `PUT` | `/api/users/profile` | ユーザープロフィール更新 |
 
-## Mobile App
+## 📱 モバイルアプリ
 
-The mobile app is built with React Native and Expo.
+React NativeとExpoで構築されたモバイルアプリケーションです。
 
-### Features
+### 主な機能
 
-- User authentication
-- Remote work tracking
-- Team collaboration
-- Real-time notifications
+- 🔐 ユーザー認証
+- ⏰ リモートワーク時間追跡
+- 👥 チーム協働
+- 🔔 リアルタイム通知
 
-## Documentation
+## 📚 ドキュメント
 
-See the `docs/` folder for detailed documentation:
-- API documentation
-- Database schema
-- Deployment guide
-- Contributing guidelines
+詳細なドキュメントは`docs/`フォルダを参照してください：
 
-## Contributing
+- [API仕様書](./docs/api.md)
+- [データベース設計](./docs/database.md)
+- [デプロイガイド](./docs/deployment.md)
+- [コントリビューションガイド](./docs/contributing.md)
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+## 🤝 コントリビューション
 
-## License
+1. リポジトリをフォーク
+2. フィーチャーブランチを作成
+3. 変更を加える
+4. テストを追加（該当する場合）
+5. プルリクエストを送信
+
+## 📄 ライセンス
 
 MIT License
+
+---
+
+## 🆘 トラブルシューティング
+
+### よくある問題
+
+**Q: アプリが起動しない**
+A: 依存関係が正しくインストールされているか確認してください：
+```bash
+npm run install:all
+```
+
+**Q: APIに接続できない**
+A: 環境変数が正しく設定されているか確認してください：
+```bash
+# .envファイルの内容を確認
+cat .env
+```
+
+**Q: ビルドエラーが発生する**
+A: キャッシュをクリアして再試行してください：
+```bash
+npm run clean
+npm run install:all
+```

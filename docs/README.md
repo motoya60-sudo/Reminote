@@ -1,18 +1,29 @@
 # Reminote Documentation
 
-This folder contains detailed documentation for the Reminote project.
+このフォルダには、Reminoteプロジェクトの詳細なドキュメントが含まれています。
 
-## Contents
+## 📚 ドキュメント一覧
 
-- [API Documentation](./api.md) - Complete API reference
-- [Database Schema](./database.md) - Database design and schema
-- [Deployment Guide](./deployment.md) - How to deploy the application
-- [Contributing Guidelines](./contributing.md) - How to contribute to the project
-- [Architecture Overview](./architecture.md) - System architecture and design decisions
+- [フォルダ構成ガイド](./folder-structure.md) - 各フォルダの役割と内容
+- [API仕様書](./api.md) - 完全なAPIリファレンス
+- [データベース設計](./database.md) - データベース設計とスキーマ
+- [デプロイガイド](./deployment.md) - アプリケーションのデプロイ方法
+- [コントリビューションガイド](./contributing.md) - プロジェクトへの貢献方法
+- [アーキテクチャ概要](./architecture.md) - システムアーキテクチャと設計判断
 
-## Quick Links
+## 🔗 クイックリンク
 
-- [Getting Started](../README.md) - Quick start guide
-- [API Endpoints](./api.md#endpoints) - Available API endpoints
-- [Database Tables](./database.md#tables) - Database table structure
-- [Environment Variables](../env.example) - Configuration options
+- [セットアップガイド](../README.md) - クイックスタートガイド
+- [APIエンドポイント](./api.md#endpoints) - 利用可能なAPIエンドポイント
+- [データベーステーブル](./database.md#tables) - データベーステーブル構造
+- [環境変数](../env.example) - 設定オプション
+
+## 📁 フォルダ構成の理解
+
+プロジェクトの各フォルダの役割を理解するには、[フォルダ構成ガイド](./folder-structure.md)を参照してください。
+
+### 主要フォルダ
+- **`api/`** - バックエンドAPIサーバー
+- **`app/`** - フロントエンドモバイルアプリ
+- **`shared/`** - 共通ライブラリと型定義
+- **`docs/`** - プロジェクトドキュメント
