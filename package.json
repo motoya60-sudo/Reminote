@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:app\"",
     "dev:api": "cd api && npm run dev",
-    "dev:app": "cd app && npm start",
+    "dev:app": "cd app && npx expo start --port 8083 --offline",
     "build": "npm run build:api && npm run build:app",
     "build:api": "cd api && npm run build",
     "build:app": "cd app && npm run build",
@@ -37,9 +37,13 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.4",
     "@react-native-community/datetimepicker": "^8.4.5",
     "expo-image-picker": "^17.0.8",
     "expo-permissions": "^14.4.0",
+    "react-datepicker": "^8.7.0",
     "react-native-modal-datetime-picker": "^18.0.0"
   }
 }
