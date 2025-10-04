@@ -12,8 +12,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { apiClient } from '../../lib/api';
+import {auth} from '../../lib/firebase';
 
 type Props = {
   visible: boolean;
@@ -21,8 +24,9 @@ type Props = {
   onSubmit?: (payload: {
     title: string;
     content: string;
-    date: string;
+    createdAt: string;
     image: string | null;
+    userId: string;
   }) => void;
 };
 
@@ -40,12 +44,14 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
   const [date, setDate] = useState(todayYMD());
   const [image, setImage] = useState<string | null>(null);
   const [contentHeight, setContentHeight] = useState(180);
+  const [isLoading, setIsLoading] = useState(false);
 
   const reset = () => {
     setTitle('');
     setContent('');
     setDate(todayYMD());
     setImage(null);
+    setIsLoading(false);
   };
 
   const handleClose = () => {
@@ -77,17 +83,60 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // バリデーション
     if (!title.trim()) return Alert.alert('未入力', 'タイトルを入力してください。');
     if (!content.trim()) return Alert.alert('未入力', '本文を入力してください。');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return Alert.alert('日付形式', 'YYYY-MM-DD の形式で入力してください。');
     }
-    const payload = { title: title.trim(), content: content.trim(), date, image };
-    if (onSubmit) {
-      onSubmit(payload);
-    } else {
-      Alert.alert('プレビュー送信', JSON.stringify(payload, null, 2));
+
+    // 認証状態を確認
+    if (!auth.currentUser) {
+      return Alert.alert('認証エラー', 'ログインが必要です。ログインしてから再度お試しください。');
+    }
+
+    setIsLoading(true);
+    try {
+      // APIを呼び出して日記を保存
+      const response = await apiClient.createDiary({
+        title: title.trim(),
+        content: content.trim(),
+        createdAt: `${date}T00:00:00.000Z`, // ISO形式に変換
+        image: image,
+        userId: auth.currentUser.uid
+
+      });
+
+      if (response.success) {
+        Alert.alert(
+          '保存完了', 
+          '日記が正常に保存されました。',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                reset();
+                onClose();
+                // 親コンポーネントにコールバックを送信
+                if (onSubmit) {
+                  onSubmit(response.data);
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('保存エラー', response.message || '日記の保存に失敗しました。');
+      }
+    } catch (error: any) {
+      console.error('日記保存エラー:', error);
+      Alert.alert(
+        '保存エラー', 
+        error.message || '日記の保存中にエラーが発生しました。'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -103,86 +152,92 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.root}
         >
-          {/* フルスクリーンの白背景（カードや影は使わない） */}
           <View style={styles.sheet}>
-            {/* 上部ナビ（テキストのみ） */}
-            <View style={styles.nav}>
-              <Pressable onPress={handleClose} hitSlop={8}>
-                <Text style={styles.navText}>閉じる</Text>
-              </Pressable>
-              <View style={{ flex: 1 }} />
-              <Pressable onPress={handleSubmit} hitSlop={8}>
-                <Text style={[styles.navText, styles.navPrimary]}>保存</Text>
-              </Pressable>
-            </View>
-
-            {/* コンテンツ */}
             <ScrollView
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.content}
+              contentContainerStyle={[styles.content, { paddingBottom: 160 }]}
               showsVerticalScrollIndicator={false}
             >
-              {/* 日付（控えめなピル） */}
+              {/* 🔼 上余白 */}
+              <View style={{ height: 40 }} />
+
+              {/* 📅 日付（編集不可） */}
               <View style={styles.dateRow}>
-                <TextInput
-                  style={styles.datePill}
-                  value={date}
-                  onChangeText={setDate}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#b6b6b6"
-                  inputMode="numeric"
-                  maxLength={10}
-                />
+                <View style={styles.datePill}>
+                  <Text style={styles.dateText}>{date}</Text>
+                </View>
               </View>
 
-              {/* タイトル（大きめ） */}
+              {/* 📝 タイトル */}
               <TextInput
                 style={styles.title}
-                placeholder="タイトル"
+                placeholder="タイトルを入力"
                 placeholderTextColor="#b6b6b6"
                 value={title}
                 onChangeText={setTitle}
                 returnKeyType="next"
               />
+                            {/* 🖼 画像（あれば表示） */}
+              {image && (
+                <View style={styles.imageBox}>
+                  <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+                </View>
+              )}
 
-              {/* うっすら下線的な区切り（実線は使わず最小限） */}
-              <View style={styles.hairline} />
-
-              {/* 本文（行間広め・自動で高さ拡張） */}
+              {/* 🖋 本文 */}
               <TextInput
-                style={[styles.body, { height: Math.max(180, contentHeight) }]}
-                placeholder="ここに書き始める…"
+                style={[styles.body, { height: 300 }]}
+                placeholder="ここに日記を書いていく…"
                 placeholderTextColor="#b6b6b6"
                 value={content}
                 onChangeText={setContent}
                 multiline
-                onContentSizeChange={(e) => {
-                  const h = e.nativeEvent.contentSize.height;
-                  setContentHeight(h + 12); // 少し余白を足して“詰まらない”見た目に
-                }}
               />
 
-              {/* 画像（インライン表示・枠なし） */}
-              {image ? (
-                <View style={styles.imageBox}>
-                  <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
-                  <View style={styles.imageActions}>
-                    <Pressable onPress={() => setImage(null)} hitSlop={6}>
-                      <Text style={styles.ghostLink}>画像を削除</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.inlineActions}>
-                  <Pressable onPress={pickImage} hitSlop={6}>
-                    <Text style={styles.ghostLink}>画像を挿入</Text>
-                  </Pressable>
-                </View>
-              )}
 
-              {/* 末尾余白 */}
-              <View style={{ height: 48 }} />
+
+
+              {/* 📎 画像追加ボタン（下部に配置） */}
+              <View style={styles.addImageContainer}>
+                {image ? (
+                  // 画像があるとき：削除ボタン
+                  <Pressable
+                    onPress={() => setImage(null)}
+                    hitSlop={6}
+                    style={[styles.addImageButton, { backgroundColor: '#fff1f2', borderColor: '#fecdd3' }]} // うっすら赤系
+                  >
+                    <Text style={[styles.addImageText, { color: '#dc2626' }]}>画像を削除</Text>
+                  </Pressable>
+                ) : (
+                  // 画像がないとき：追加ボタン
+                  <Pressable onPress={pickImage} hitSlop={6} style={styles.addImageButton}>
+                    <Text style={styles.addImageText}>＋ 画像を追加</Text>
+                  </Pressable>
+                )}
+              </View>
             </ScrollView>
+
+            {/* 📌 下部固定フッター */}
+            <View style={styles.footer}>
+              <Pressable onPress={handleClose} hitSlop={8} style={styles.footerGhost}>
+                <Text style={styles.footerGhostText}>閉じる</Text>
+              </Pressable>
+
+              <View style={{ width: 12 }} />
+
+              <TouchableOpacity 
+                onPress={handleSubmit} 
+                activeOpacity={0.8} 
+                style={[styles.footerPrimary, isLoading && styles.footerPrimaryDisabled]}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#ffffff" size="small" />
+                ) : (
+                  <Text style={styles.footerPrimaryText}>保存</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -191,7 +246,6 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
 }
 
 const styles = StyleSheet.create({
-  // 背景は薄い透過のみ（演出最小限）
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.12)',
@@ -199,35 +253,38 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  // フルスクリーンの白いシート
   sheet: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  // 上部ナビ（テキストボタンのみ、影やボーダーなし）
-  nav: {
-    height: 52,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  navText: {
-    fontSize: 16,
-    color: '#6b7280',
-    fontWeight: '600',
-    letterSpacing: 0.2,
-  },
-  navPrimary: {
-    color: '#111827',
-  },
-  // 本文領域（左右は広めの余白）
   content: {
     paddingHorizontal: 20,
-    paddingTop: 6,
+    paddingTop: 0,
   },
-  // 日付ピル（枠線でなく淡い背景）
+
+  // タイトル
+  title: {
+    fontSize: 24,
+    lineHeight: 32,
+    color: '#111827',
+    fontWeight: '700',
+    paddingVertical: 8,
+    marginTop: 12,
+  },
+
+  // 本文
+  body: {
+    fontSize: 17,
+    lineHeight: 28,
+    color: '#222',
+    paddingTop: 8,
+    paddingBottom: 2,
+    textAlignVertical: 'top',
+  },
+
+  // 日付
   dateRow: {
-    marginTop: 10,
+    marginTop: 16,
     marginBottom: 12,
   },
   datePill: {
@@ -240,50 +297,91 @@ const styles = StyleSheet.create({
     fontSize: 13,
     minWidth: 120,
   },
-  // タイトル：大きく、太くしすぎない
-  title: {
-    fontSize: 24,
-    lineHeight: 32,
-    color: '#111827',
-    fontWeight: '700',
-    paddingVertical: 6,
-  },
-  // 区切り（実線は目立つので超薄いヘアライン）
-  hairline: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#eee',
-    marginTop: 6,
-    marginBottom: 10,
-  },
-  // 本文：行間たっぷり、等幅じゃないシステムフォント想定
-  body: {
-    fontSize: 17,
-    lineHeight: 28,
-    color: '#222',
-    paddingTop: 8,
-    paddingBottom: 2,
-    textAlignVertical: 'top',
-  },
-  // インライン画像
+
+  // 画像
   imageBox: {
-    marginTop: 16,
     borderRadius: 12,
     overflow: 'hidden',
+    marginBottom: 8,
   },
   image: {
     width: '100%',
-    height: 220,
+    height: 400,
   },
   imageActions: {
     marginTop: 8,
+    alignItems: 'center',
   },
-  inlineActions: {
-    marginTop: 12,
-  },
-  // 文字だけの“ゴースト”リンク
   ghostLink: {
     fontSize: 14,
     color: '#6b7280',
     textDecorationLine: 'underline',
   },
+
+  // 「画像を追加」ボタン（下部）
+  addImageContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  addImageButton: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    backgroundColor: '#f9fafb',
+  },
+  addImageText: {
+    fontSize: 15,
+    color: '#374151',
+    fontWeight: '600',
+  },
+
+  // フッター
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: Platform.select({ ios: 24, android: 16 }),
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#e5e7eb',
+    backgroundColor: '#ffffff',
+  },
+  footerGhost: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerGhostText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  footerPrimary: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#111827',
+  },
+  footerPrimaryText: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  footerPrimaryDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  dateText: {
+    color: '#111827',
+    fontSize: 13,
+  },
+
 });

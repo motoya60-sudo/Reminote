@@ -14,6 +14,7 @@ app.use(cors({
 
 // ルート設定
 app.use('/api/users', require('./src/routes/user-route'));
+app.use('/api/diaries', require('./src/routes/diary-route'));
 
 // ルート
 app.get('/', (req, res) => {
