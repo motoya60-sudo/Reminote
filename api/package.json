@@ -1,8 +1,19 @@
 {
+  "name": "reminote-api",
+  "version": "1.0.0",
+  "description": "Reminote Backend API",
+  "main": "index.js",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0",
+    "dotenv": "^16.3.1"
   },
   "scripts": {
-    "dev": "node index.js"
-  }
+    "dev": "node index.js",
+    "start": "node index.js"
+  },
+  "keywords": ["api", "express", "firebase"],
+  "author": "Reminote Team",
+  "license": "MIT"
 }

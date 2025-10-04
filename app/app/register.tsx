@@ -1,7 +1,7 @@
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { apiClient } from "@/lib/api";
 import { useState } from "react";
 import { Alert, Button, Text, TextInput, View } from "react-native";
 
@@ -20,21 +20,27 @@ export default function RegisterScreen() {
 			);
 			const user = userCredential.user;
 	
-			await setDoc(doc(db, "user", user.uid), {
-				uid: user.uid,
-				createdAt: new Date(),
-				email: user.email,
-				name: name,
-				password: password,
-			})
-	
-			Alert.alert("登録完了", "登録が完了しました。");
-			router.replace('/home');
+			const response = await apiClient.createUserProfile(name);
+
+			if(response.success) {
+				Alert.alert("登録完了", "登録が完了しました。");
+				router.replace('/home')
+			}else {
+				Alert.alert("エラー", response.message || "プロフィール作成中にエラーが発生しました。");
+			}
 		}catch(error: any) {
-			const errorCode = error.code;
-    	const errorMessage = error.message;
-			console.log(errorCode, errorMessage);
-			Alert.alert("登録エラー", error.message);
+			console.error("Registration error:", error);
+			
+			// Firebase認証エラーの場合
+			if (error.code === 'auth/email-already-in-use') {
+				Alert.alert("登録エラー", "このメールアドレスは既に使用されています。");
+			} else if (error.code === 'auth/weak-password') {
+				Alert.alert("登録エラー", "パスワードが弱すぎます。6文字以上で入力してください。");
+			} else if (error.code === 'auth/invalid-email') {
+				Alert.alert("登録エラー", "無効なメールアドレスです。");
+			} else {
+				Alert.alert("登録エラー", error.message || "登録中にエラーが発生しました。");
+			}
 		}
 
 	}
