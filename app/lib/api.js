@@ -8,8 +8,11 @@ class ApiClient {
 		try {
 			const user = auth.currentUser;
 			if (user) {
-				return await user.getIdToken();
+				const token = await user.getIdToken();
+				console.log('Auth token obtained:', token ? 'Success' : 'Failed');
+				return token;
 			}
+			console.log('No authenticated user found');
 			return null;
 		} catch (error) {
 			console.error('Failed to get auth token:', error);
@@ -32,9 +35,15 @@ class ApiClient {
 			...options,
 		};
 
+		console.log('Making API request to:', url);
+		console.log('With token:', token ? 'Present' : 'Missing');
+
 		try {
 			const response = await fetch(url, config);
 			const data = await response.json();
+
+			console.log('API Response status:', response.status);
+			console.log('API Response data:', data);
 
 			if (!response.ok) {
 				// 認証エラーの場合
@@ -57,6 +66,69 @@ class ApiClient {
 			method: 'POST',
 			body: JSON.stringify({ name }),
 		});
+	}
+
+	// ===== 日記関連のAPIメソッド =====
+
+	// 日記作成
+	// 日記作成（クライアントは title, content, image だけ送る）
+	async createDiary({ title, content, image }) {
+		return this.request('/diaries', {
+		method: 'POST',
+		body: JSON.stringify({
+			title,
+			content,
+			image: image ?? null,
+			// createdAt / userId は送らない（サーバが付ける）
+		}),
+		});
+	}
+
+	// 日記一覧取得（ユーザーの日記）
+	async getDiaries(limit = 50) {
+		return this.request(`/diaries?limit=${limit}`);
+	}
+
+	// 特定の日記取得
+	async getDiary(id) {
+		return this.request(`/diaries/${id}`);
+	}
+
+	// 日記更新
+	async updateDiary(id, updateData) {
+		const { title, content, date, image } = updateData;
+		
+		return this.request(`/diaries/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify({
+				title,
+				content,
+				createdAt,
+				image
+			}),
+		});
+	}
+
+	// 日記削除
+	async deleteDiary(id) {
+		return this.request(`/diaries/${id}`, {
+			method: 'DELETE',
+		});
+	}
+
+	// 日記検索
+	async searchDiaries(searchTerm) {
+		return this.request(`/diaries/search?q=${encodeURIComponent(searchTerm)}`);
+	}
+
+	// 日付範囲で日記取得
+	async getDiariesByDateRange(startDate, endDate) {
+		return this.request(`/diaries/range/date?startDate=${startDate}&endDate=${endDate}`);
+	}
+
+	// 全日記一覧取得（管理者用）
+	async getAllDiaries(limit = 50) {
+		return this.request(`/diaries/admin/all?limit=${limit}`);
 	}
 }
 
