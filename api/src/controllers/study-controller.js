@@ -76,10 +76,27 @@ class StudyController {
       const { limit = 50 } = req.query;
       const studies = await studyRepo.getStudiesByUserId(userId, parseInt(limit));
 
+      // 各勉強記録にタグ情報を追加
+      const studiesWithTags = await Promise.all(
+        studies.map(async (study) => {
+          const tagIds = await linkRepo.getTagsByStudy(study.id);
+          const tagNames = await Promise.all(
+            tagIds.map(async (tagId) => {
+              const tag = await tagRepo.getTagById(tagId);
+              return tag ? tag.name : null;
+            })
+          );
+          return {
+            ...study,
+            tags: tagNames.filter(Boolean)
+          };
+        })
+      );
+
       res.status(200).json({
         success: true,
-        data: studies,
-        count: studies.length
+        data: studiesWithTags,
+        count: studiesWithTags.length
       });
     } catch (error) {
       console.error('Get user studies error:', error);

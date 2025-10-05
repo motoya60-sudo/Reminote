@@ -1,6 +1,6 @@
 // app/studiesView.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TextInput, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -19,7 +19,11 @@ function sanitizeImageUri(uri?: string | null) {
 export default function StudiesView() {
   const router = useRouter();
   const [studies, setStudies] = useState<Study[]>([]);
+  const [filteredStudies, setFilteredStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string>('');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -37,6 +41,14 @@ export default function StudiesView() {
           image: sanitizeImageUri(s.image),
         }));
         setStudies(list);
+        setFilteredStudies(list);
+        
+        // 全タグを抽出
+        const tags = new Set<string>();
+        list.forEach(study => {
+          study.tags?.forEach(tag => tags.add(tag));
+        });
+        setAllTags(Array.from(tags));
       } catch (e) {
         console.error('❌ Fetch studies failed:', e);
       } finally {
@@ -47,20 +59,104 @@ export default function StudiesView() {
     return () => unsub();
   }, [router]);
 
+  // 検索・フィルタリング
+  useEffect(() => {
+    let filtered = studies;
+
+    // タグフィルタ
+    if (selectedTag) {
+      filtered = filtered.filter(study => 
+        study.tags?.some(tag => tag.includes(selectedTag))
+      );
+    }
+
+    // テキスト検索
+    if (searchQuery) {
+      filtered = filtered.filter(study => 
+        study.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        study.content?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredStudies(filtered);
+  }, [studies, selectedTag, searchQuery]);
+
   if (loading) return <ActivityIndicator style={{ marginTop: 32 }} />;
+
+  const handleTagSelect = (tag: string) => {
+    setSelectedTag(selectedTag === tag ? '' : tag);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedTag('');
+  };
 
   return (
     <View style={styles.container}>
-      <Header title="勉強記録一覧" onAvatarPress={() => router.back()} />
+      <Header 
+        title="勉強記録一覧" 
+        onAvatarPress={() => router.back()}
+      />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.count}>{studies.length} 件</Text>
+        {/* 検索・フィルターエリア */}
+        <View style={styles.searchSection}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="タイトルや内容で検索..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          
+          {/* タグフィルター */}
+          {allTags.length > 0 && (
+            <View style={styles.tagFilterSection}>
+              <View style={styles.tagFilterHeader}>
+                <Text style={styles.tagFilterTitle}>タグで絞り込み</Text>
+                {(searchQuery || selectedTag) && (
+                  <Pressable onPress={clearFilters}>
+                    <Text style={styles.clearButton}>クリア</Text>
+                  </Pressable>
+                )}
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
+                <View style={styles.tagGrid}>
+                  {allTags.map((tag) => (
+                    <Pressable
+                      key={tag}
+                      style={[
+                        styles.tagFilter,
+                        selectedTag === tag && styles.tagFilterSelected
+                      ]}
+                      onPress={() => handleTagSelect(tag)}
+                    >
+                      <Text style={[
+                        styles.tagFilterText,
+                        selectedTag === tag && styles.tagFilterTextSelected
+                      ]}>
+                        {tag}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          )}
+        </View>
 
-        {studies.length === 0 ? (
-          <Text style={styles.empty}>まだ勉強記録がありません</Text>
+        <Text style={styles.count}>
+          {filteredStudies.length} 件
+          {(selectedTag || searchQuery) && ` (全${studies.length}件中)`}
+        </Text>
+
+        {filteredStudies.length === 0 ? (
+          <Text style={styles.empty}>
+            {studies.length === 0 ? 'まだ勉強記録がありません' : '検索結果がありません'}
+          </Text>
         ) : (
           <View>
-            {studies.map((s) => (
+            {filteredStudies.map((s) => (
               <Card
                 key={s.id}
                 title={s.title}
@@ -96,5 +192,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginTop: 12,
+  },
+  // 検索・フィルター関連
+  searchSection: {
+    marginBottom: 16,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    marginBottom: 12,
+  },
+  tagFilterSection: {
+    marginTop: 8,
+  },
+  tagFilterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tagFilterTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  clearButton: {
+    fontSize: 14,
+    color: '#3b82f6',
+    fontWeight: '600',
+  },
+  tagScroll: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tagFilter: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  tagFilterSelected: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  tagFilterText: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  tagFilterTextSelected: {
+    color: '#fff',
   },
 });

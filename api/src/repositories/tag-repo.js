@@ -71,6 +71,17 @@ class TagRepository {
       throw error;
     }
   }
+
+  async getTagById(id) {
+    try {
+      const doc = await db.collection('tags').doc(id).get();
+      if (!doc.exists) return null;
+      return { id: doc.id, ...doc.data() };
+    } catch (error) {
+      console.error('Error getting tag by ID:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new TagRepository();

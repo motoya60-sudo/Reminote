@@ -30,9 +30,13 @@ export default function Card({
           <Text style={styles.cardTitle} numberOfLines={1}>{title}</Text>
           <Text style={styles.cardDate}>{date}</Text>
         </View>
-        {subtitle ? <Text style={styles.cardSubtitle} numberOfLines={1}>{subtitle}</Text> : null}
-        {body ? <Text style={styles.cardBody} numberOfLines={2}>{body}</Text> : null}
-        {!!tags?.length && (
+        {subtitle ? <Text style={styles.cardSubtitle} numberOfLines={2}>{subtitle}</Text> : null}
+        {body ? <Text style={styles.cardBody} numberOfLines={3}>{body}</Text> : null}
+      </View>
+      
+      {/* タグをカード外の右下に表示 */}
+      {!!tags?.length && (
+        <View style={styles.cardTags}>
           <View style={styles.tagRow}>
             {tags.map((t) => (
               <View key={t} style={styles.tagChip}>
@@ -40,8 +44,8 @@ export default function Card({
               </View>
             ))}
           </View>
-        )}
-      </View>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -52,7 +56,7 @@ const styles = StyleSheet.create({
     marginBottom: CARD_GAP,
     backgroundColor: '#fff',
     borderRadius: 14,
-    overflow: 'hidden',
+    overflow: 'visible', // タグが見えるように
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: '#e5e7eb',
     shadowColor: '#000',
@@ -62,13 +66,18 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardImage: { width: '100%', height: 150, backgroundColor: '#f3f4f6' },
-  cardContent: { padding: 12 },
+  cardContent: { padding: 12, paddingBottom: 8 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   cardTitle: { fontSize: 16, fontWeight: '700', maxWidth: '70%' },
   cardDate: { fontSize: 12, color: '#6b7280' },
   cardSubtitle: { marginTop: 4, fontSize: 13, color: '#4b5563' },
   cardBody: { marginTop: 6, fontSize: 13, color: '#374151' },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
+  cardTags: { 
+    paddingHorizontal: 12, 
+    paddingBottom: 12,
+    alignItems: 'flex-end'
+  },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' },
   tagChip: {
     paddingHorizontal: 8,
     paddingVertical: 4,
