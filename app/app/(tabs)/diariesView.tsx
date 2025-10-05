@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Header from '@/components/ui/Header';
-import Card from '@/components/ui/Card'; // ✅ さっきのCardを使用
+import Card from '@/components/ui/Card';
 import type { Diary } from '@/lib/types';
 import { apiClient } from '@/lib/api';
 
@@ -47,10 +47,11 @@ export default function DiariesView() {
     return () => unsub();
   }, [router]);
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 32 }} />;
+  if (loading) return <ActivityIndicator style={{ marginTop: 24 }} />;
 
   return (
     <View style={styles.container}>
+      {/* ▼ タイトルを「勉強記録一覧」に変更 */}
       <Header title="日記一覧" onAvatarPress={() => router.back()} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -84,8 +85,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
   },
   scroll: {
-    padding: 16,
-    paddingBottom: 40,
+    // ▼ 余白を少し削って全体を上に押し上げる
+    paddingHorizontal: 16,
+    paddingTop: 8,          // ← 16 から 8 に
+    paddingBottom: 32,      // ← 40 から 32 に
   },
   count: {
     fontSize: 12,
@@ -95,6 +98,6 @@ const styles = StyleSheet.create({
   empty: {
     fontSize: 14,
     color: '#6b7280',
-    marginTop: 12,
+    marginTop: 10,          // ← 12 から 10 に
   },
 });

@@ -5,9 +5,8 @@ import { useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Header from '@/components/ui/Header';
-import TopTabs from '@/components/ui/TopTabs';
-import Card from '@/components/ui/Card'; // ✅ さっきのCardを使用
-import type { Study, TabKey } from '@/lib/types';
+import Card from '@/components/ui/Card';
+import type { Study } from '@/lib/types';
 import { apiClient } from '@/lib/api';
 
 // blob形式のURIはRNでは読めないので除外
@@ -25,7 +24,6 @@ export default function StudiesView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [allTags, setAllTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<TabKey>('study');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -38,17 +36,18 @@ export default function StudiesView() {
       try {
         // 📥 APIから全件取得
         const res = await apiClient.getStudies();
-        const list: Study[] = (res.data || []).map((s: Study) => ({
+        const list: Study[] = (res?.data || res?.items || []).map((s: Study) => ({
           ...s,
           image: sanitizeImageUri(s.image),
         }));
+
         setStudies(list);
         setFilteredStudies(list);
-        
+
         // 全タグを抽出
         const tags = new Set<string>();
-        list.forEach(study => {
-          study.tags?.forEach(tag => tags.add(tag));
+        list.forEach((study) => {
+          study.tags?.forEach((tag) => tags.add(tag));
         });
         setAllTags(Array.from(tags));
       } catch (e) {
@@ -67,17 +66,19 @@ export default function StudiesView() {
 
     // タグフィルタ
     if (selectedTag) {
-      filtered = filtered.filter(study => 
-        study.tags?.some(tag => tag.includes(selectedTag))
+      filtered = filtered.filter((study) =>
+        study.tags?.some((tag) => tag.includes(selectedTag))
       );
     }
 
     // テキスト検索
     if (searchQuery) {
-      filtered = filtered.filter(study => 
-        study.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        study.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        study.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (study) =>
+          study.title.toLowerCase().includes(q) ||
+          study.content?.toLowerCase().includes(q) ||
+          study.tags?.some((tag) => tag.toLowerCase().includes(q))
       );
     }
 
@@ -97,12 +98,10 @@ export default function StudiesView() {
 
   return (
     <View style={styles.container}>
-      <Header 
-        title="勉強記録一覧" 
+      <Header
+        title="勉強記録一覧"
         onAvatarPress={() => router.back()}
       />
-
-      <TopTabs activeTab={activeTab} onChange={setActiveTab} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* 検索・フィルターエリア */}
@@ -113,7 +112,7 @@ export default function StudiesView() {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          
+
           {/* タグフィルター */}
           {allTags.length > 0 && (
             <View style={styles.tagFilterSection}>
@@ -125,21 +124,21 @@ export default function StudiesView() {
                   </Pressable>
                 )}
               </View>
+
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
                 <View style={styles.tagGrid}>
                   {allTags.map((tag) => (
                     <Pressable
                       key={tag}
-                      style={[
-                        styles.tagFilter,
-                        selectedTag === tag && styles.tagFilterSelected
-                      ]}
+                      style={[styles.tagFilter, selectedTag === tag && styles.tagFilterSelected]}
                       onPress={() => handleTagSelect(tag)}
                     >
-                      <Text style={[
-                        styles.tagFilterText,
-                        selectedTag === tag && styles.tagFilterTextSelected
-                      ]}>
+                      <Text
+                        style={[
+                          styles.tagFilterText,
+                          selectedTag === tag && styles.tagFilterTextSelected,
+                        ]}
+                      >
                         {tag}
                       </Text>
                     </Pressable>
