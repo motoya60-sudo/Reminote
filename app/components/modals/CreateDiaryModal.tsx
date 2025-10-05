@@ -87,11 +87,6 @@ export default function CreateDiaryModal({ visible, onClose}: Props) {
       return Alert.alert('日付形式', 'YYYY-MM-DD の形式で入力してください。');
     }
 
-    // 認証状態を確認
-    if (!auth.currentUser) {
-      return Alert.alert('認証エラー', 'ログインが必要です。ログインしてから再度お試しください。');
-    }
-
     setIsLoading(true);
     try {
       // APIを呼び出して日記を保存
