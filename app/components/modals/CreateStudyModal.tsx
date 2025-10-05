@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
   sheet: {
     flex: 1,
     backgroundColor: '#ffffff',
+    paddingTop: 30,
   },
   // 上部ナビ（テキストボタンのみ、影やボーダーなし）
   nav: {
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
   // 本文領域（左右は広めの余白）
   content: {
     paddingHorizontal: 20,
-    paddingTop: 6,
+    paddingTop: 10,
   },
   // 日付ピル（枠線でなく淡い背景）
   dateRow: {
