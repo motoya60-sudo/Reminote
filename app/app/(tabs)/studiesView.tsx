@@ -5,8 +5,9 @@ import { useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Header from '@/components/ui/Header';
+import TopTabs from '@/components/ui/TopTabs';
 import Card from '@/components/ui/Card'; // ✅ さっきのCardを使用
-import type { Study } from '@/lib/types';
+import type { Study, TabKey } from '@/lib/types';
 import { apiClient } from '@/lib/api';
 
 // blob形式のURIはRNでは読めないので除外
@@ -24,6 +25,7 @@ export default function StudiesView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [allTags, setAllTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<TabKey>('study');
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -74,7 +76,8 @@ export default function StudiesView() {
     if (searchQuery) {
       filtered = filtered.filter(study => 
         study.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        study.content?.toLowerCase().includes(searchQuery.toLowerCase())
+        study.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        study.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -99,12 +102,14 @@ export default function StudiesView() {
         onAvatarPress={() => router.back()}
       />
 
+      <TopTabs activeTab={activeTab} onChange={setActiveTab} />
+
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* 検索・フィルターエリア */}
         <View style={styles.searchSection}>
           <TextInput
             style={styles.searchInput}
-            placeholder="タイトルや内容で検索..."
+            placeholder="タイトル、内容、タグで検索..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
