@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifyFirebaseToken } = require('../middleware/auth');
-const studyTagController = require('../controllers/study-tags-controller');
+const studyTagController = require('../controllers/study-tags-link-controller');
 
 const router = express.Router();
 
