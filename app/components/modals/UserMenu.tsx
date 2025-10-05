@@ -5,10 +5,11 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   onProfile: () => void;
+  onLineNotify: () => void;
   onLogout: () => void;
 };
 
-export default function UserMenu({ visible, onClose, onProfile, onLogout }: Props) {
+export default function UserMenu({ visible, onClose, onProfile, onLineNotify, onLogout }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.menuBackdrop} onPress={onClose}>
@@ -21,6 +22,10 @@ export default function UserMenu({ visible, onClose, onProfile, onLogout }: Prop
 
           <TouchableOpacity style={styles.menuItem} onPress={onProfile}>
             <Text style={styles.menuItemText}>プロフィール</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={onLineNotify}>
+            <Text style={styles.menuItemText}>📱 LINE Notify設定</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={onLogout}>
