@@ -41,6 +41,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.4",
     "@react-native-community/datetimepicker": "^8.4.5",
+    "dotenv": "^17.2.3",
     "expo-image-picker": "~17.0.8",
     "expo-permissions": "^14.4.0",
     "react-datepicker": "^8.7.0",
