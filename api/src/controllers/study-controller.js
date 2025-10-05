@@ -71,22 +71,17 @@ class StudyController {
 
   // ユーザーの勉強記録一覧取得
   async getStudies(req, res) {
+    console.log('control')
     try {
       const userId = req.user.uid;
       const { limit = 50 } = req.query;
-      const studies = await studyRepo.getStudiesByUserId(userId, parseInt(limit));
+      const studies = await studyRepo.getStudiesByUserId(userId, limit);
+      console.log('[studies] returned count=', studies.length);
 
-      res.status(200).json({
-        success: true,
-        data: studies,
-        count: studies.length
-      });
-    } catch (error) {
-      console.error('Get user studies error:', error);
-      res.status(500).json({
-        success: false,
-        message: error.message || '勉強記録一覧取得中にエラーが発生しました'
-      });
+      return res.status(200).json({ success: true, data: studies, count: studies.length });
+    } catch (e) {
+      console.error('Get user studies error:', e);
+      return res.status(500).json({ success: false, message: '勉強一覧取得中にエラー' });
     }
   }
 

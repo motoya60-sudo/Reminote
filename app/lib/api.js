@@ -145,6 +145,7 @@ class ApiClient {
 	}
 
 	async getStudies(limit = 50) {
+		console.log('api')
 		return this.request(`/studies?limit=${limit}`);
 	}
 

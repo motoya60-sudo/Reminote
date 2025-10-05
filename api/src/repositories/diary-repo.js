@@ -41,7 +41,6 @@ class DiaryRepository {
 	}
 
 	async getDiariesByUserId(userId, limit = 50) {
-		console.log('cccccc');
 		const safe = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
 		console.log('[repo] q userId=', userId, 'limit=', safe);
 	  

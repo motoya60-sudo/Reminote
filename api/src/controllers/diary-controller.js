@@ -76,8 +76,6 @@ class DiaryController {
 
   // ユーザーの日記一覧取得
   async getUserDiaries(req, res) {
-
-    console.log('aaaaaa');
     try {
       const userId = req.user.uid;
       const limit = Number(req.query.limit ?? 50);
