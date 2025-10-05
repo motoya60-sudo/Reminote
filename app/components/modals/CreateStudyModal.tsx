@@ -27,6 +27,11 @@ type Props = {
   }) => void;
 };
 
+type CreateStudyTagLinksPayload = {
+  studyId: string,
+  tagIds: string[];
+};
+
 function todayYMD() {
   const d = new Date();
   const y = d.getFullYear();
@@ -121,20 +126,51 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
     if (!title.trim()) return Alert.alert('未入力', 'タイトルを入力してください。');
     if (!content.trim()) return Alert.alert('未入力', '本文を入力してください。');
     
-    // フロントエンドで送信するデータ（user_idとcreatedAtはバックエンドで自動設定）
-    const payload = { 
-      title: title.trim(), 
-      content: content.trim(), 
-      image: image || null, 
-      tags 
-    };
-    
-    saveStudy(payload);
+    try {
+      const responseStudy = await apiClient.createStudy({
+        title: title.trim(),
+        content: content.trim(),
+        image: image,
+      });
+
+      if (!responseStudy.success) {
+        return Alert.alert('保存エラー', '学びの保存に失敗しました');
+      }
+
+      const studyId = responseStudy.data.id;
+      console.log('front : ',tags)
+
+    if (tags.length > 0) {
+      const responseTags = await apiClient.createTags(tags);
+      if (!responseTags.success) {
+        return Alert.alert('保存エラー', 'タグの保存に失敗しました');
+      }
+      const tagIds = responseTags.data.map((tag: any) => tag.id);
+      const payload: CreateStudyTagLinksPayload = { studyId, tagIds }; 
+      const responseLinks = await apiClient.createStudyTagLinks(payload);
+      if (!responseLinks.success) {
+        return Alert.alert('保存エラー', '学びとタグの紐付けに失敗しました');
+      }
+    }
+      Alert.alert('保存完了', '学びが正常に保存されました', [
+        {
+          text: 'OK',
+          onPress: () => {
+            reset();
+            onClose();
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('保存エラー', '通信中にエラーが発生しました');
+    }
   };
+
   return (
     <Modal
       visible={visible}

@@ -13,6 +13,7 @@ import CreatePicker from '@/components/modals/CreatePicker';
 import CreateDiaryModal from '@/components/modals/CreateDiaryModal';
 
 import type { Diary, Study, TabKey } from '@/lib/types';
+import CreateStudyModal from '@/components/modals/CreateStudyModal';
 
 export default function Page() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function Page() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [createVisible, setCreateVisible] = useState(false);
   const [diaryModalVisible, setDiaryModalVisible] = useState(false);
+  const [studyModalVisible, setStudyModalVisible] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -137,12 +139,16 @@ export default function Page() {
         }}
         onCreateStudy={() => {
           setCreateVisible(false);
-          router.push('/createStudy'); 
+          setStudyModalVisible(true); 
         }}
       />
       <CreateDiaryModal
         visible={diaryModalVisible}
         onClose={() => setDiaryModalVisible(false)}
+      />
+      <CreateStudyModal
+        visible={studyModalVisible}
+        onClose={() => setStudyModalVisible(false)}
       />
     </View>
   );

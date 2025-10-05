@@ -4,17 +4,23 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-//ミドルウェア設定
-// JSONを扱えるようにする
-app.use(express.json());
+const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:8083';
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true
+  origin: allowedOrigin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+app.use(express.json());
 
 // ルート設定
 app.use('/api/users', require('./src/routes/user-route'));
 app.use('/api/diaries', require('./src/routes/diary-route'));
+app.use('/api/studies', require('./src/routes/study-route'));
+app.use('/api/tags', require('./src/routes/tag-route'));
+app.use('/api/study-tags', require('./src/routes/study-tags-route'));
 
 // ルート
 app.get('/', (req, res) => {
