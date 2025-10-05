@@ -21,6 +21,7 @@ app.use('/api/diaries', require('./src/routes/diary-route'));
 app.use('/api/studies', require('./src/routes/study-route'));
 app.use('/api/tags', require('./src/routes/tag-route'));
 app.use('/api/study-tags', require('./src/routes/study-tags-route'));
+app.use('/api/line', require('./src/routes/line-route'));
 
 // ルート
 app.get('/', (req, res) => {

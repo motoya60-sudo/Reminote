@@ -22,6 +22,7 @@ import CreateDiaryModal from '@/components/modals/CreateDiaryModal';
 import type { Diary, Study, TabKey } from '@/lib/types';
 
 import CreateStudyModal from '@/components/modals/CreateStudyModal';
+import LineNotifySettings from '@/components/ui/LineNotifySettings';
 
 import { apiClient } from '@/lib/api';
 
@@ -33,6 +34,7 @@ export default function Page() {
   const [createVisible, setCreateVisible] = useState(false);
   const [diaryModalVisible, setDiaryModalVisible] = useState(false);
   const [studyModalVisible, setStudyModalVisible] = useState(false);
+  const [lineNotifyModalVisible, setLineNotifyModalVisible] = useState(false);
   const [diaries, setDiaries] = useState<Diary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -160,6 +162,10 @@ export default function Page() {
           setMenuVisible(false);
           router.push('/profile');
         }}
+        onLineNotify={() => {
+          setMenuVisible(false);
+          setLineNotifyModalVisible(true);
+        }}
         onLogout={handleLogout}
       />
 
@@ -183,6 +189,12 @@ export default function Page() {
       <CreateStudyModal
         visible={studyModalVisible}
         onClose={() => setStudyModalVisible(false)}
+      />
+
+      {/* LINE Notify設定モーダル */}
+      <LineNotifySettings
+        visible={lineNotifyModalVisible}
+        onClose={() => setLineNotifyModalVisible(false)}
       />
     </View>
   );

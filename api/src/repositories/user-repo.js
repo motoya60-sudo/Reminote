@@ -68,6 +68,33 @@ class UserRepository {
     }
   }
 
+  async setLineNotifyToken(id, token) {
+    try {
+      console.log(`Setting LINE Notify token for user ${id}:`, token ? 'Token provided' : 'Token is null');
+      
+      // tokenがnullの場合は、フィールドを削除
+      const updateData = {
+        lineNotifyUpdatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      if (token !== null) {
+        updateData.lineNotifyToken = token;
+      } else {
+        // Firestoreでフィールドを削除する場合は、FieldValue.delete()を使用
+        const admin = require('firebase-admin');
+        updateData.lineNotifyToken = admin.firestore.FieldValue.delete();
+      }
+      
+      await db.collection('users').doc(id).update(updateData);
+      console.log(`LINE Notify token ${token ? 'set' : 'removed'} for user ${id}`);
+      return { id, lineNotifyToken: token };
+    } catch (error) {
+      console.error('Error setting LINE Notify token:', error);
+      throw error;
+    }
+  }
+
   async deleteUser(id) {
     try {
       await db.collection('users').doc(id).delete();

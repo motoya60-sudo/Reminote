@@ -238,6 +238,37 @@ class ApiClient {
   }
 
   // ======================
+  // 📱 LINE Notify系
+  // ======================
+
+  /** LINE Notifyトークンを設定 */
+  async setLineNotifyToken(token) {
+    return this.request('/line/notify-token', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  /** LINE Notifyトークンを削除 */
+  async removeLineNotifyToken() {
+    return this.request('/line/notify-token', {
+      method: 'DELETE',
+    });
+  }
+
+  /** LINE Notifyトークンの状態を取得 */
+  async getLineNotifyStatus() {
+    return this.request('/line/notify-status');
+  }
+
+  /** テスト用：LINE通知を送信 */
+  async sendTestNotification() {
+    return this.request('/line/test-notification', {
+      method: 'POST',
+    });
+  }
+
+  // ======================
   // 📘 日記系
   // ======================
 
