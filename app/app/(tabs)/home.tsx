@@ -34,6 +34,7 @@ export default function Page() {
   const [diaryModalVisible, setDiaryModalVisible] = useState(false);
   const [studyModalVisible, setStudyModalVisible] = useState(false);
   const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [studies, setStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,11 +50,16 @@ export default function Page() {
 
       try {
         // ここは任意件数でOK（2件以上入っていれば「さらに見る」表示に使える）
-        const res = await apiClient.getDiaries(5);
-        console.log('📗 diaries:', res);
-        setDiaries(res.data || res.items || []);
+        const diaryRes = await apiClient.getDiaries(5);
+        console.log('📗 diaries:', diaryRes);
+        setDiaries(diaryRes.data || diaryRes.items || []);
+
+        // 勉強記録も取得
+        const studyRes = await apiClient.getStudies(5);
+        console.log('📚 studies:', studyRes);
+        setStudies(studyRes.data || []);
       } catch (err) {
-        console.error('❌ Fetch diaries failed:', err);
+        console.error('❌ Fetch data failed:', err);
       } finally {
         setLoading(false);
       }
@@ -73,25 +79,9 @@ export default function Page() {
     }
   };
 
-  const studies: Study[] = useMemo(
-    () => [
-      {
-        id: 's1',
-        title: '回帰分析入門（可視化付き）',
-        summary: 'Kumamoto Free Wi-Fiの地点データから距離要因を仮説検証。',
-        date: '2025-10-01',
-        tags: ['#統計', '#Pandas'],
-      },
-      {
-        id: 's2',
-        title: 'CLTと近似分布の確認',
-        summary: '正規・ベータ・カイ二乗の比較をPythonで実装。',
-        date: '2025-09-28',
-        tags: ['#確率', '#Python'],
-      },
-    ],
-    []
-  );
+  // プレビュー表示用（2件のみ）
+  const previewStudies = studies.slice(0, 2);
+  const hasMoreStudies = studies.length > 2;
 
   // ▼ 2件だけプレビュー表示
   const previewDiaries = diaries.slice(0, 2);
@@ -135,18 +125,28 @@ export default function Page() {
         ) : (
           <>
             <Text style={styles.sectionTitle}>勉強</Text>
+            
+            {/* ▼ プレビュー(2件) */}
             <View style={styles.grid}>
-              {studies.map((s) => (
+              {previewStudies.map((s) => (
                 <Card
                   key={s.id}
                   title={s.title}
-                  subtitle={s.summary}
-                  date={s.date}
+                  subtitle={s.content}
+                  date={s.createdAt}
+                  image={s.image}
                   tags={s.tags}
                   onPress={() => router.push(`/study/${s.id}`)}
                 />
               ))}
             </View>
+
+            {/* ▼ 3件目以降は一覧へ */}
+            {hasMoreStudies && (
+              <View style={{ marginTop: 12 }}>
+                <SeeMoreButton onPress={() => router.push('/studiesView')} />
+              </View>
+            )}
           </>
         )}
       </ScrollView>
