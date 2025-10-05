@@ -148,6 +148,10 @@ class ApiClient {
 		return this.request(`/studies?limit=${limit}`);
 	}
 
+	async getStudy(id) {
+		return this.request(`/studies/${id}`);
+	}
+
 	async updateStudy(id, updateData) {
 		const { title, content, image} = updateData;
 
@@ -164,7 +168,7 @@ class ApiClient {
 	async deleteStudy(id) {
 		return this.request(`/studies/${id}`, {
 			method: 'DELETE',
-		})
+		});
 	}
 
   /**

@@ -1,18 +1,23 @@
 export type Diary = {
-  uid:string;  
+  uid?: string;  
   id: string;
   title: string;
   content: string;
-  date: string;
-  image?: string;
+  date?: string;
+  createdAt?: string;
+  image?: string | null;
+  tags?: string[];
 };
 
 export type Study = {
-  uid: string;  
+  uid?: string;  
   id: string;
   title: string;
-  summary: string;
-  date: string;
+  content?: string;
+  summary?: string;
+  date?: string;
+  createdAt?: string;
+  image?: string | null;
   tags?: string[];
 };
 
