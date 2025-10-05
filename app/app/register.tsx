@@ -1,7 +1,7 @@
 import { auth } from "@/lib/firebase";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "../lib/api";
 import { useState } from "react";
 import { Alert, Button, Text, TextInput, View } from "react-native";
 
@@ -13,14 +13,20 @@ export default function RegisterScreen() {
 	const handleRegister = async() => {
 		// ここに登録処理を実装
 		try {
+			console.log('Starting registration process...');
+			console.log('apiClient:', apiClient);
+			console.log('createUserProfile method:', apiClient?.createUserProfile);
+			
 			const userCredential = await createUserWithEmailAndPassword(
 				auth,
 				email,
 				password
 			);
 			const user = userCredential.user;
+			console.log('Firebase user created:', user.uid);
 	
 			const response = await apiClient.createUserProfile(name);
+			console.log('Profile creation response:', response);
 
 			if(response.success) {
 				Alert.alert("登録完了", "登録が完了しました。");
