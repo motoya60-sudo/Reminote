@@ -1,81 +1,44 @@
 const { admin } = require('../services/firebase');
 
-// Firebase IDトークンを検証するミドルウェア
+// 認証必須
 const verifyFirebaseToken = async (req, res, next) => {
+
+  console.log('[AUTH] enter', req.method, req.originalUrl);
+  
   try {
-    // Authorizationヘッダーからトークンを取得
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: '認証トークンが提供されていません'
-      });
+    const h = req.headers.authorization || '';
+    if (!h.startsWith('Bearer ')) {
+      console.warn('[AUTH] missing token');
+      return res.status(401).json({ message:'Missing token' });
     }
-
-    const token = authHeader.split(' ')[1];
-
-    // Firebase IDトークンを検証
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    
-    // リクエストオブジェクトにユーザー情報を追加
-    req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-      email_verified: decodedToken.email_verified
-    };
-
+    const decoded = await admin.auth().verifyIdToken(h.split(' ')[1]);
+    console.log('[AUTH] ok uid=', decoded.uid);
+    req.user = { uid: decoded.uid };
     next();
-  } catch (error) {
-    console.error('Token verification error:', error);
-    
-    if (error.code === 'auth/id-token-expired') {
-      return res.status(401).json({
-        success: false,
-        message: '認証トークンの有効期限が切れています'
-      });
-    }
-    
-    if (error.code === 'auth/invalid-id-token') {
-      return res.status(401).json({
-        success: false,
-        message: '無効な認証トークンです'
-      });
-    }
-
-    return res.status(401).json({
-      success: false,
-      message: '認証に失敗しました'
-    });
+  } catch (e) {
+    console.error('[AUTH] fail', e.code, e.message);
+    return res.status(401).json({ message:'Invalid token' });
   }
 };
 
-// オプショナル認証（認証されていなくてもアクセス可能）
+// 任意認証（無くても通す）
 const optionalAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       const decodedToken = await admin.auth().verifyIdToken(token);
-      
       req.user = {
         uid: decodedToken.uid,
         email: decodedToken.email,
         email_verified: decodedToken.email_verified
       };
     }
-    
     next();
   } catch (error) {
-    // 認証エラーがあっても続行（オプショナル）
-    console.log('Optional auth failed:', error.message);
+    console.log('[auth] Optional auth failed:', error.message);
     next();
   }
 };
 
-module.exports = {
-  verifyFirebaseToken,
-  optionalAuth
-};
-
+module.exports = { verifyFirebaseToken, optionalAuth };
