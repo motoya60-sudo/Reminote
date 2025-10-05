@@ -1,8 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 
 import Header from '@/components/ui/Header';
 import TopTabs from '@/components/ui/TopTabs';
@@ -13,6 +20,7 @@ import CreatePicker from '@/components/modals/CreatePicker';
 import CreateDiaryModal from '@/components/modals/CreateDiaryModal';
 
 import type { Diary, Study, TabKey } from '@/lib/types';
+import { apiClient } from '@/lib/api';
 
 export default function Page() {
   const router = useRouter();
@@ -20,6 +28,34 @@ export default function Page() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [createVisible, setCreateVisible] = useState(false);
   const [diaryModalVisible, setDiaryModalVisible] = useState(false);
+  const [diaries, setDiaries] = useState<Diary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Firebaseのログイン状態が確定するまで待つ
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        console.log('🚫 未ログイン');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ ログイン済み UID:', user.uid);
+
+      try {
+        // ここは任意件数でOK（2件以上入っていれば「さらに見る」表示に使える）
+        const res = await apiClient.getDiaries(5);
+        console.log('📗 diaries:', res);
+        setDiaries(res.data || res.items || []);
+      } catch (err) {
+        console.error('❌ Fetch diaries failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -30,28 +66,6 @@ export default function Page() {
       console.log(error);
     }
   };
-
-  const diaries: Diary[] = useMemo(
-    () => [
-      {
-        id: 'd1',
-        title: 'ハッカソン準備',
-        content: 'Expo Routerでタブの骨組み作成。睡眠UIの微調整も。',
-        date: '2025-10-03',
-        image: 'https://picsum.photos/seed/diary1/600/400',
-        tags: ['#開発', '#日記'],
-      },
-      {
-        id: 'd2',
-        title: '研究メモ',
-        content: 'YOLOv8でテキスト検出の実験。mAPと推論速度を計測。',
-        date: '2025-10-02',
-        image: 'https://picsum.photos/seed/diary2/600/400',
-        tags: ['#研究', '#CV'],
-      },
-    ],
-    []
-  );
 
   const studies: Study[] = useMemo(
     () => [
@@ -73,6 +87,12 @@ export default function Page() {
     []
   );
 
+  // ▼ 2件だけプレビュー表示
+  const previewDiaries = diaries.slice(0, 2);
+  const hasMoreDiaries = diaries.length > 2;
+
+  if (loading) return <ActivityIndicator style={{ marginTop: 32 }} />;
+
   return (
     <View style={styles.container}>
       <Header title="ホーム" onAvatarPress={() => setMenuVisible(true)} />
@@ -83,19 +103,28 @@ export default function Page() {
         {activeTab === 'diary' ? (
           <>
             <Text style={styles.sectionTitle}>日記</Text>
+
+            {/* ▼ プレビュー(2件) */}
             <View style={styles.grid}>
-              {diaries.map((d) => (
+              {previewDiaries.map((d) => (
                 <Card
                   key={d.id}
                   title={d.title}
                   body={d.content}
-                  date={d.date}
+                  date={d.createdAt}
                   image={d.image}
                   tags={d.tags}
                   onPress={() => router.push(`/diary/${d.id}`)}
                 />
               ))}
             </View>
+
+            {/* ▼ 3件目以降は一覧へ */}
+            {hasMoreDiaries && (
+              <View style={{ marginTop: 12 }}>
+                <SeeMoreButton onPress={() => router.push('/diariesView')} />
+              </View>
+            )}
           </>
         ) : (
           <>
@@ -132,19 +161,28 @@ export default function Page() {
         visible={createVisible}
         onClose={() => setCreateVisible(false)}
         onCreateDiary={() => {
-          setCreateVisible(false);      // 「新規作成」モーダルを閉じる
-          setDiaryModalVisible(true);   // 日記作成モーダル
+          setCreateVisible(false); // 「新規作成」モーダルを閉じる
+          setDiaryModalVisible(true); // 日記作成モーダル
         }}
         onCreateStudy={() => {
           setCreateVisible(false);
-          router.push('/createStudy'); 
+          router.push('/createStudy');
         }}
       />
+
       <CreateDiaryModal
         visible={diaryModalVisible}
         onClose={() => setDiaryModalVisible(false)}
       />
     </View>
+  );
+}
+
+function SeeMoreButton({ onPress }: { onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={seeMoreStyles.btn}>
+      <Text style={seeMoreStyles.text}>さらに見る</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -158,5 +196,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -CARD_GAP / 2,
+  },
+});
+
+const seeMoreStyles = StyleSheet.create({
+  btn: {
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#111827',
+  },
+  text: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
 });

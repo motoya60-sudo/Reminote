@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import{useRouter} from 'expo-router';
 import {
   Modal,
   View,
@@ -21,13 +22,6 @@ import {auth} from '../../lib/firebase';
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSubmit?: (payload: {
-    title: string;
-    content: string;
-    createdAt: string;
-    image: string | null;
-    userId: string;
-  }) => void;
 };
 
 function todayYMD() {
@@ -38,7 +32,8 @@ function todayYMD() {
   return `${y}-${m}-${dd}`;
 }
 
-export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) {
+export default function CreateDiaryModal({ visible, onClose}: Props) {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [date, setDate] = useState(todayYMD());
@@ -67,19 +62,20 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:
-          (ImagePicker as any).MediaTypeOptions?.Images ??
-          (ImagePicker as any).MediaType?.Images ??
-          ImagePicker.MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [2, 1],
+        mediaTypes: ['images', 'videos'],
+        allowsEditing: false,
         quality: 1,
+        selectionLimit: 1,
       });
+  
       if (!result.canceled) {
-        setImage(result.assets[0].uri);
+        setImage(result.assets[0]?.uri ?? null);
       }
+  
+      console.log(result);
     } catch (e) {
       console.log('画像選択エラー:', e);
+      Alert.alert('画像選択エラー', '画像の読み込みに失敗しました。もう一度お試しください。');
     }
   };
 
@@ -102,15 +98,13 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
       const response = await apiClient.createDiary({
         title: title.trim(),
         content: content.trim(),
-        createdAt: `${date}T00:00:00.000Z`, // ISO形式に変換
         image: image,
-        userId: auth.currentUser.uid
 
       });
 
       if (response.success) {
         Alert.alert(
-          '保存完了', 
+          '保存完了',
           '日記が正常に保存されました。',
           [
             {
@@ -118,10 +112,7 @@ export default function CreateDiaryModal({ visible, onClose, onSubmit }: Props) 
               onPress: () => {
                 reset();
                 onClose();
-                // 親コンポーネントにコールバックを送信
-                if (onSubmit) {
-                  onSubmit(response.data);
-                }
+                router.replace('/home'); 
               }
             }
           ]

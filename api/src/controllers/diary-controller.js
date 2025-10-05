@@ -76,25 +76,23 @@ class DiaryController {
 
   // ユーザーの日記一覧取得
   async getUserDiaries(req, res) {
+
+    console.log('aaaaaa');
     try {
       const userId = req.user.uid;
-      const { limit = 50 } = req.query;
-
-      const diaries = await diaryRepo.getDiariesByUserId(userId, parseInt(limit));
-
-      res.status(200).json({
-        success: true,
-        data: diaries,
-        count: diaries.length
-      });
-    } catch (error) {
-      console.error('Get user diaries error:', error);
-      res.status(500).json({
-        success: false,
-        message: error.message || '日記一覧取得中にエラーが発生しました'
-      });
+      const limit = Number(req.query.limit ?? 50);
+      console.log('[diaries] uid=', userId, 'limit=', limit);
+  
+      const diaries = await diaryRepo.getDiariesByUserId(userId, limit);
+      console.log('[diaries] returned count=', diaries.length);
+  
+      return res.status(200).json({ success: true, data: diaries, count: diaries.length });
+    } catch (e) {
+      console.error('Get user diaries error:', e);
+      return res.status(500).json({ success: false, message: '日記一覧取得中にエラー' });
     }
   }
+  
 
   // 全日記一覧取得（管理者用）
   async getAllDiaries(req, res) {
