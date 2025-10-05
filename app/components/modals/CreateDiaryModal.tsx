@@ -18,6 +18,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { apiClient } from '../../lib/api';
 import {auth} from '../../lib/firebase';
+import { blobToBase64 } from '../../lib/blobToBase64';
 
 type Props = {
   visible: boolean;
@@ -38,6 +39,7 @@ export default function CreateDiaryModal({ visible, onClose}: Props) {
   const [content, setContent] = useState('');
   const [date, setDate] = useState(todayYMD());
   const [image, setImage] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [contentHeight, setContentHeight] = useState(180);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,6 +48,7 @@ export default function CreateDiaryModal({ visible, onClose}: Props) {
     setContent('');
     setDate(todayYMD());
     setImage(null);
+    setImageBase64(null);
     setIsLoading(false);
   };
 
@@ -62,14 +65,27 @@ export default function CreateDiaryModal({ visible, onClose}: Props) {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images', 'videos'],
-        allowsEditing: false,
-        quality: 1,
-        selectionLimit: 1,
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [2, 1],
+        quality: 0.7,
+        base64: true, // Base64エンコードを有効にする
       });
   
       if (!result.canceled) {
-        setImage(result.assets[0]?.uri ?? null);
+        const asset = result.assets[0];
+        setImage(asset.uri);
+        
+        // Base64データを保存
+        if (asset.base64) {
+          setImageBase64(`data:image/jpeg;base64,${asset.base64}`);
+        } else {
+          // base64が利用できない場合はfetchで取得
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const base64 = await blobToBase64(blob);
+          setImageBase64(`data:image/jpeg;base64,${base64}`);
+        }
       }
   
       console.log(result);
@@ -93,8 +109,7 @@ export default function CreateDiaryModal({ visible, onClose}: Props) {
       const response = await apiClient.createDiary({
         title: title.trim(),
         content: content.trim(),
-        image: image,
-
+        image: imageBase64 || image, // Base64データがあれば使用
       });
 
       if (response.success) {
@@ -188,7 +203,10 @@ export default function CreateDiaryModal({ visible, onClose}: Props) {
                 {image ? (
                   // 画像があるとき：削除ボタン
                   <Pressable
-                    onPress={() => setImage(null)}
+                    onPress={() => {
+                      setImage(null);
+                      setImageBase64(null);
+                    }}
                     hitSlop={6}
                     style={[styles.addImageButton, { backgroundColor: '#fff1f2', borderColor: '#fecdd3' }]} // うっすら赤系
                   >
