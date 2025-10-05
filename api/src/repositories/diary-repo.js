@@ -41,29 +41,25 @@ class DiaryRepository {
 	}
 
 	async getDiariesByUserId(userId, limit = 50) {
-		try {
-			const diariesQuery = await db.collection('diaries')
-				.where('userId', '==', userId)
-				.orderBy('date', 'desc')
-				.limit(limit)
-				.get();
-
-			const diaries = [];
-			diariesQuery.forEach(doc => {
-				diaries.push({ id: doc.id, ...doc.data() });
-			});
-
-			return diaries;
-		} catch (error) {
-			console.error('Error getting diaries by user:', error);
-			throw error;
-		}
-	}
+		console.log('cccccc');
+		const safe = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+		console.log('[repo] q userId=', userId, 'limit=', safe);
+	  
+		const snap = await db.collection('diaries')
+		  .where('userId', '==', userId)
+		  .orderBy('createdAt', 'desc') 
+		  .limit(safe)
+		  .get();
+	  
+		console.log('[repo] snap size=', snap.size);
+		return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+	  }
+	  
 
 	async getAllDiaries(limit = 50) {
 		try {
 			const diariesQuery = await db.collection('diaries')
-				.orderBy('date', 'desc')
+				.orderBy('createdAt', 'desc')
 				.limit(limit)
 				.get();
 
@@ -158,9 +154,9 @@ class DiaryRepository {
 		try {
 			const diariesQuery = await db.collection('diaries')
 				.where('userId', '==', userId)
-				.where('date', '>=', startDate)
-				.where('date', '<=', endDate)
-				.orderBy('date', 'desc')
+				.where('createdAt', '>=', startDate)
+				.where('createdAt', '<=', endDate)
+				.orderBy('createdAt', 'desc')
 				.get();
 
 			const diaries = [];
