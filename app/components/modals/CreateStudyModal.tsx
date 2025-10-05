@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { auth } from '../../lib/firebase';
 import { apiClient } from '../../lib/api';
-import { blobToBase64 } from '../../lib/blobToBase64';
 import {
   Modal,
   View,
@@ -46,7 +45,6 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
   const [content, setContent] = useState('');
   const [date, setDate] = useState(todayYMD());
   const [image, setImage] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +54,6 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
     setContent('');
     setDate(todayYMD());
     setImage(null);
-    setImageBase64(null);
     setTags([]);
     setTagInput('');
     setIsLoading(false);
@@ -82,22 +79,9 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
         allowsEditing: true,
         aspect: [2, 1],
         quality: 1,
-        base64: true, // Base64エンコードを有効にする
       });
       if (!result.canceled) {
-        const asset = result.assets[0];
-        setImage(asset.uri);
-        
-        // Base64データを保存
-        if (asset.base64) {
-          setImageBase64(`data:image/jpeg;base64,${asset.base64}`);
-        } else {
-          // base64が利用できない場合はfetchで取得
-          const response = await fetch(asset.uri);
-          const blob = await response.blob();
-          const base64 = await blobToBase64(blob);
-          setImageBase64(`data:image/jpeg;base64,${base64}`);
-        }
+        setImage(result.assets[0].uri);
       }
     } catch (e) {
       console.log('画像選択エラー:', e);
@@ -121,16 +105,10 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
       setIsLoading(true);
       console.log('Saving study data:', studyData);
       
-      // 画像がある場合はBase64データを使用
-      const dataToSave = {
-        ...studyData,
-        image: imageBase64 || studyData.image, // Base64データがあれば使用
-      };
-      
       // バックエンドAPIに保存（user_idとcreatedAtはバックエンドで自動設定）
       const response = await apiClient.request('/studies', {
         method: 'POST',
-        body: JSON.stringify(dataToSave),
+        body: JSON.stringify(studyData),
       });
 
       if (response.success) {
@@ -282,12 +260,9 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
                 <View style={styles.imageBox}>
                   <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
                   <View style={styles.imageActions}>
-                         <Pressable onPress={() => {
-                           setImage(null);
-                           setImageBase64(null);
-                         }} hitSlop={6}>
-                           <Text style={styles.ghostLink}>画像を削除</Text>
-                         </Pressable>
+                    <Pressable onPress={() => setImage(null)} hitSlop={6}>
+                      <Text style={styles.ghostLink}>画像を削除</Text>
+                    </Pressable>
                   </View>
                 </View>
               ) : (
