@@ -8,6 +8,7 @@ import Header from '@/components/ui/Header';
 import Card from '@/components/ui/Card';
 import type { Diary } from '@/lib/types';
 import { apiClient } from '@/lib/api';
+import { Stack } from 'expo-router'; 
 
 function sanitizeImageUri(uri?: string | null) {
   if (!uri) return null;
@@ -64,7 +65,8 @@ export default function DiaryDetailPage() {
 
   return (
     <View style={styles.container}>
-      <Header title="日記" onAvatarPress={() => router.back()} />
+      <Stack.Screen options={{ title: '日記' }} />
+      {/* <Header title="日記" onAvatarPress={() => router.back()} /> */}
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -72,14 +74,14 @@ export default function DiaryDetailPage() {
         {error && <Text style={styles.error}>{error}</Text>}
 
         {!error && diary && (
-          <Card
-            title={diary.title}
-            body={diary.content}
-            date={diary.createdAt ?? diary.date /* どちらでも表示できるように */}
-            image={diary.image}
-            tags={diary.tags}
-            // 詳細画面なので onPress は不要
-          />
+        <Card
+          title={diary.title}
+          body={diary.content}
+          date={diary.createdAt ?? diary.date}
+          image={diary.image}
+          tags={diary.tags}
+          noTruncateBody={true}   // ← これで全文表示
+        />
         )}
       </ScrollView>
     </View>

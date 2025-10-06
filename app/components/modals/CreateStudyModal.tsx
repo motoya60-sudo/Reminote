@@ -1,3 +1,4 @@
+// components/modals/CreateStudyModal.tsx
 import React, { useState } from 'react';
 import { auth } from '../../lib/firebase';
 import { apiClient } from '../../lib/api';
@@ -15,6 +16,7 @@ import {
   Pressable,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Props = {
   visible: boolean;
@@ -28,7 +30,7 @@ type Props = {
 };
 
 type CreateStudyTagLinksPayload = {
-  studyId: string,
+  studyId: string;
   tagIds: string[];
 };
 
@@ -97,15 +99,14 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
   };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   const saveStudy = async (studyData: any) => {
     try {
       setIsLoading(true);
       console.log('Saving study data:', studyData);
-      
-      // バックエンドAPIに保存（user_idとcreatedAtはバックエンドで自動設定）
+
       const response = await apiClient.request('/studies', {
         method: 'POST',
         body: JSON.stringify(studyData),
@@ -126,10 +127,10 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
     }
   };
 
-  const handleSubmit = async() => {
+  const handleSubmit = async () => {
     if (!title.trim()) return Alert.alert('未入力', 'タイトルを入力してください。');
     if (!content.trim()) return Alert.alert('未入力', '本文を入力してください。');
-    
+
     try {
       const responseStudy = await apiClient.createStudy({
         title: title.trim(),
@@ -142,20 +143,21 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
       }
 
       const studyId = responseStudy.data.id;
-      console.log('front : ',tags)
+      console.log('front : ', tags);
 
-    if (tags.length > 0) {
-      const responseTags = await apiClient.createTags(tags);
-      if (!responseTags.success) {
-        return Alert.alert('保存エラー', 'タグの保存に失敗しました');
+      if (tags.length > 0) {
+        const responseTags = await apiClient.createTags(tags);
+        if (!responseTags.success) {
+          return Alert.alert('保存エラー', 'タグの保存に失敗しました');
+        }
+        const tagIds = responseTags.data.map((tag: any) => tag.id);
+        const payload: CreateStudyTagLinksPayload = { studyId, tagIds };
+        const responseLinks = await apiClient.createStudyTagLinks(payload);
+        if (!responseLinks.success) {
+          return Alert.alert('保存エラー', '学びとタグの紐付けに失敗しました');
+        }
       }
-      const tagIds = responseTags.data.map((tag: any) => tag.id);
-      const payload: CreateStudyTagLinksPayload = { studyId, tagIds }; 
-      const responseLinks = await apiClient.createStudyTagLinks(payload);
-      if (!responseLinks.success) {
-        return Alert.alert('保存エラー', '学びとタグの紐付けに失敗しました');
-      }
-    }
+
       Alert.alert('保存完了', '学びが正常に保存されました', [
         {
           text: 'OK',
@@ -172,31 +174,24 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={handleClose}>
       <View style={styles.backdrop}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.root}
-        >
-          {/* フルスクリーンの白背景（カードや影は使わない） */}
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
           <View style={styles.sheet}>
-            {/* 上部ナビ（テキストのみ） */}
-            <View style={styles.nav}>
-              <Pressable onPress={handleClose} hitSlop={8}>
-                <Text style={styles.navText}>閉じる</Text>
-              </Pressable>
-              <View style={{ flex: 1 }} />
-              <Pressable onPress={handleSubmit} hitSlop={8} disabled={isLoading}>
-                <Text style={[styles.navText, styles.navPrimary, isLoading && { opacity: 0.5 }]}>
-                  {isLoading ? '保存中...' : '保存'}
-                </Text>
-              </Pressable>
-            </View>
+            {/* ✅ SafeArea を使ってナビを安全領域下に配置 */}
+            <SafeAreaView edges={['top']} style={styles.safeTop}>
+              <View style={styles.nav}>
+                <Pressable onPress={handleClose} hitSlop={8}>
+                  <Text style={styles.navText}>閉じる</Text>
+                </Pressable>
+                <View style={{ flex: 1 }} />
+                <Pressable onPress={handleSubmit} hitSlop={8} disabled={isLoading}>
+                  <Text style={[styles.navText, styles.navPrimary, isLoading && { opacity: 0.5 }]}>
+                    {isLoading ? '保存中...' : '保存'}
+                  </Text>
+                </Pressable>
+              </View>
+            </SafeAreaView>
 
             {/* コンテンツ */}
             <ScrollView
@@ -204,12 +199,12 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
             >
-              {/* 日付（控えめなピル） */}
+              {/* 日付 */}
               <View style={styles.dateRow}>
                 <Text style={styles.datePill}>{date}</Text>
               </View>
 
-              {/* タイトル（大きめ） */}
+              {/* タイトル */}
               <TextInput
                 style={styles.title}
                 placeholder="タイトル"
@@ -219,7 +214,7 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
                 returnKeyType="next"
               />
 
-              {/* タグ入力エリア */}
+              {/* タグ入力 */}
               <View style={styles.tagContainer}>
                 <Text style={styles.tagLabel}>タグ</Text>
                 <View style={styles.tagInputRow}>
@@ -236,8 +231,7 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
                     <Text style={styles.addTagText}>追加</Text>
                   </Pressable>
                 </View>
-                
-                {/* タグ表示エリア */}
+
                 {tags.length > 0 && (
                   <View style={styles.tagsRow}>
                     {tags.map((tag, index) => (
@@ -252,10 +246,9 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
                 )}
               </View>
 
-              {/* うっすら下線的な区切り（実線は使わず最小限） */}
               <View style={styles.hairline} />
 
-              {/* 画像（インライン表示・枠なし） */}
+              {/* 画像 */}
               {image ? (
                 <View style={styles.imageBox}>
                   <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
@@ -272,7 +265,8 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
                   </Pressable>
                 </View>
               )}
-              {/* 本文（行間広め・固定高さ） */}
+
+              {/* 本文 */}
               <TextInput
                 style={[styles.body, { height: 300 }]}
                 placeholder="ここに書き始める…"
@@ -282,8 +276,6 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
                 multiline
               />
 
-
-              {/* 末尾余白 */}
               <View style={{ height: 48 }} />
             </ScrollView>
           </View>
@@ -294,7 +286,6 @@ export default function CreateStudyModal({ visible, onClose, onSubmit }: Props) 
 }
 
 const styles = StyleSheet.create({
-  // 背景は薄い透過のみ（演出最小限）
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.12)',
@@ -302,14 +293,20 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  // フルスクリーンの白いシート
   sheet: {
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  // 上部ナビ（テキストボタンのみ、影やボーダーなし）
+
+  /** ✅ SafeArea の上にヘッダーを置く用のラッパ */
+  safeTop: {
+    backgroundColor: '#ffffff',
+  },
+
+  // 上部ナビ（SafeArea 内に配置）
   nav: {
-    height: 52,
+    paddingTop:30,
+    height: 52, // ここを基準にちょうど良い高さに
     paddingHorizontal: 16,
     alignItems: 'center',
     flexDirection: 'row',
@@ -323,12 +320,14 @@ const styles = StyleSheet.create({
   navPrimary: {
     color: '#111827',
   },
-  // 本文領域（左右は広めの余白）
+
+  // 本文領域
   content: {
     paddingHorizontal: 20,
     paddingTop: 6,
   },
-  // 日付ピル（枠線でなく淡い背景）
+
+  // 日付ピル
   dateRow: {
     marginTop: 10,
     marginBottom: 12,
@@ -339,11 +338,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     backgroundColor: '#f3f4f6',
+
     color: '#111827',
     fontSize: 13,
     minWidth: 120,
   },
-  // タイトル：大きく、太くしすぎない
+
+  // タイトル
   title: {
     fontSize: 24,
     lineHeight: 32,
@@ -351,14 +352,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     paddingVertical: 6,
   },
-  // 区切り（実線は目立つので超薄いヘアライン）
+
   hairline: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#eee',
     marginTop: 6,
     marginBottom: 10,
   },
-  // 本文：行間たっぷり、等幅じゃないシステムフォント想定
+
+  // 本文
   body: {
     fontSize: 17,
     lineHeight: 28,
@@ -367,7 +369,8 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
     textAlignVertical: 'top',
   },
-  // インライン画像
+
+  // 画像
   imageBox: {
     marginTop: 16,
     borderRadius: 12,
@@ -383,13 +386,13 @@ const styles = StyleSheet.create({
   inlineActions: {
     marginTop: 12,
   },
-  // 文字だけの"ゴースト"リンク
   ghostLink: {
     fontSize: 14,
     color: '#6b7280',
     textDecorationLine: 'underline',
   },
-  // タグ関連のスタイル
+
+  // タグ
   tagContainer: {
     marginTop: 12,
     marginBottom: 8,
