@@ -21,7 +21,24 @@ const verifyFirebaseToken = async (req, res, next) => {
   }
 };
 
-
+// 任意認証（無くても通す）
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      req.user = {
+        uid: decodedToken.uid,
+        email: decodedToken.email,
+        email_verified: decodedToken.email_verified
+      };
+    }
+    next();
+  } catch (error) {
+    console.log('[auth] Optional auth failed:', error.message);
+    next();
+  }
 };
 
 
