@@ -9,7 +9,7 @@ const verifyFirebaseToken = async (req, res, next) => {
     const h = req.headers.authorization || '';
     if (!h.startsWith('Bearer ')) {
       console.warn('[AUTH] missing token');
-      return res.status(401).json({ message:'Missing token' });
+      return res.status(402).json({ message:'Missing token' });
     }
     const decoded = await admin.auth().verifyIdToken(h.split(' ')[1]);
     console.log('[AUTH] ok uid=', decoded.uid);
